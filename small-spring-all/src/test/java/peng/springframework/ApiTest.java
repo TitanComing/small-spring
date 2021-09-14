@@ -3,8 +3,12 @@ package peng.springframework;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
 import org.junit.Test;
+import peng.springframework.bean.UserDao;
 import peng.springframework.bean.UserService;
+import peng.springframework.beans.factory.ProperlyValues;
+import peng.springframework.beans.factory.PropertyValue;
 import peng.springframework.beans.factory.config.BeanDefinition;
+import peng.springframework.beans.factory.config.BeanReference;
 import peng.springframework.beans.factory.support.DefaultListableBeanFactory;
 
 import java.lang.reflect.Constructor;
@@ -17,18 +21,23 @@ public class ApiTest {
         // 1.初始化 BeanFactory
         DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
 
-        // 2.注入bean
-        BeanDefinition beanDefinition = new BeanDefinition(UserService.class);
+        // 2. UserDao 注册, 先注册进去，才能引用
+        beanFactory.registerBeanDefinition("userDao", new BeanDefinition(UserDao.class));
+
+        // 3. UserService 设置属性【uId, userDao】
+        ProperlyValues properlyValues = new ProperlyValues();
+        properlyValues.addPropertyValue(new PropertyValue("uId", "10001"));
+        properlyValues.addPropertyValue(new PropertyValue("userDao",new BeanReference("userDao")));
+
+        // 4. UserService 注入bean
+        BeanDefinition beanDefinition = new BeanDefinition(UserService.class, properlyValues);
         beanFactory.registerBeanDefinition("userService", beanDefinition);
 
-        // 3.第一次获取 bean, 这时候会创建一个userservice的实例对象;
+        // 5. 获取一个userservice的实例对象;
         //   现在可以传入构造参数了
-        UserService userService = (UserService) beanFactory.getBean("userService","peng");
+        UserService userService = (UserService) beanFactory.getBean("userService");
         userService.queryUserInfo();
 
-        // 4.第二次获取 bean from Singleton,这时候缓存的就是上次创建的实例对象
-        UserService userService_singleton = (UserService) beanFactory.getBean("userService");
-        userService_singleton.queryUserInfo();
     }
 
     @Test

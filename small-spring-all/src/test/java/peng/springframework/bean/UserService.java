@@ -3,24 +3,35 @@ package peng.springframework.bean;
 
 public class UserService {
 
-    private String name;
+    private String uId;
+
+    private UserDao userDao;
 
     public UserService() {
     }
 
-    public UserService(String name){
-        this.name = name;
+    public UserService(String uId){
+        this.uId = uId;
     }
 
     public void queryUserInfo() {
-        System.out.println("查询用户信息: " + name);
+        System.out.println("查询用户信息: " + userDao.queryUserName(uId));
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("");
-        sb.append("").append(name);
-        return sb.toString();
+    public String getuId() {
+        return uId;
+    }
+
+    public void setuId(String uId) {
+        this.uId = uId;
+    }
+
+    public UserDao getUserDao() {
+        return userDao;
+    }
+
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
     }
 
 }
