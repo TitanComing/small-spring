@@ -1,6 +1,6 @@
 package peng.springframework.beans.factory.config;
 
-import peng.springframework.beans.factory.ProperlyValues;
+import peng.springframework.beans.ProperlyValues;
 
 /**
  * Create by peng on 2021/9/9.
