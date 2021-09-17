@@ -1,4 +1,4 @@
-package peng.springframework.beans.factory;
+package peng.springframework.beans;
 
 /**
  * Create by peng on 2021/9/14.

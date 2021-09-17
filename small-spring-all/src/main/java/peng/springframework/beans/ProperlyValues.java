@@ -1,4 +1,4 @@
-package peng.springframework.beans.factory;
+package peng.springframework.beans;
 
 import java.util.ArrayList;
 import java.util.List;
