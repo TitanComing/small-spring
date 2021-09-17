@@ -7,7 +7,7 @@ import java.util.List;
  * Create by peng on 2021/9/14.
  * 实例对象的域信息集合
  */
-public class ProperlyValues {
+public class PropertyValues {
 
     private final List<PropertyValue> propertyValueList = new ArrayList<>();
 

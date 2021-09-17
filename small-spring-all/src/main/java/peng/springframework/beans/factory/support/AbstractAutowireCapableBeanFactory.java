@@ -2,7 +2,7 @@ package peng.springframework.beans.factory.support;
 
 import cn.hutool.core.bean.BeanUtil;
 import peng.springframework.beans.BeansException;
-import peng.springframework.beans.ProperlyValues;
+import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanReference;
@@ -61,8 +61,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
      */
     protected void applyProperyValues(String beanName, Object bean, BeanDefinition beanDefinition) {
         try {
-            ProperlyValues properlyValues = beanDefinition.getProperlyValues();
-            for (PropertyValue properlyValue : properlyValues.getPropertyValues()) {
+            PropertyValues propertyValues = beanDefinition.getPropertyValues();
+            for (PropertyValue properlyValue : propertyValues.getPropertyValues()) {
 
                 String name = properlyValue.getName();
                 Object value = properlyValue.getValue();

@@ -2,20 +2,23 @@ package peng.springframework;
 
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
+import org.junit.Before;
 import org.junit.Test;
 import peng.springframework.bean.UserDao;
 import peng.springframework.bean.UserService;
-import peng.springframework.beans.ProperlyValues;
+import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanReference;
 import peng.springframework.beans.factory.support.DefaultListableBeanFactory;
+import peng.springframework.core.io.DefaultResourceLoader;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-public class ApiTest {
+public class PrimaryApiTest {
 
+    //框架功能编程注册bean
     @Test
     public void test_BeanFactory() {
         // 1.初始化 BeanFactory
@@ -25,18 +28,19 @@ public class ApiTest {
         beanFactory.registerBeanDefinition("userDao", new BeanDefinition(UserDao.class));
 
         // 3. UserService 设置属性【uId, userDao】
-        ProperlyValues properlyValues = new ProperlyValues();
-        properlyValues.addPropertyValue(new PropertyValue("uId", "10001"));
-        properlyValues.addPropertyValue(new PropertyValue("userDao",new BeanReference("userDao")));
+        PropertyValues propertyValues = new PropertyValues();
+        propertyValues.addPropertyValue(new PropertyValue("uId", "10001"));
+        propertyValues.addPropertyValue(new PropertyValue("userDao",new BeanReference("userDao")));
 
         // 4. UserService 注入bean
-        BeanDefinition beanDefinition = new BeanDefinition(UserService.class, properlyValues);
+        BeanDefinition beanDefinition = new BeanDefinition(UserService.class, propertyValues);
         beanFactory.registerBeanDefinition("userService", beanDefinition);
 
         // 5. 获取一个userservice的实例对象;
         //   现在可以传入构造参数了
         UserService userService = (UserService) beanFactory.getBean("userService");
-        userService.queryUserInfo();
+        String result = userService.queryUserInfo();
+        System.out.println("测试结果：" + result);
 
     }
 
