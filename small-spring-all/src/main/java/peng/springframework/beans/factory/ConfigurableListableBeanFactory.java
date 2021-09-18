@@ -4,6 +4,7 @@ package peng.springframework.beans.factory;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import peng.springframework.beans.factory.config.BeanDefinition;
+import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 /**
@@ -13,5 +14,9 @@ import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
 public interface ConfigurableListableBeanFactory extends ListableBeanFactory, AutowireCapableBeanFactory, ConfigurableBeanFactory {
 
     BeanDefinition getBeanDefinition(String beanName) throws BeansException;
+
+    void preInstantiateSingletons() throws BeansException;
+
+    void addBeanPostProcessor(BeanPostProcessor beanPostProcessor);
 
 }

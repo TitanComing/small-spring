@@ -18,7 +18,7 @@ public class DefaultResourceLoader implements ResourceLoader {
             return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()));
         } else {
             try {
-                //抛出异常不一定是大问题，可以用于逻辑判断
+                //抛出异常不一定大问题，可以用于逻辑判断
                 URL url = new URL(location);
                 return new UrlResource(url);
             } catch (MalformedURLException e) {

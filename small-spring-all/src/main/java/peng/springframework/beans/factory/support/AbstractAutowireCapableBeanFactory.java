@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
+import peng.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import peng.springframework.beans.factory.config.BeanDefinition;
+import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.BeanReference;
 
 import java.lang.reflect.Constructor;
@@ -13,9 +15,9 @@ import java.lang.reflect.Constructor;
  * Create by peng on 2021/9/10.
  * 各个类实现自己的这一层职责的方法
  */
-public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory {
+public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory implements AutowireCapableBeanFactory {
 
-    //bean工厂直接提供了默认的构造策略，字类可以set或者get这个构建测率
+    //bean工厂直接提供了默认的构造策略，字类可以set或者get这个构建实例
     private InstantiationStrategy instantiationStrategy = new CglibSubclassingInstantiationStrategy();
 
     @Override
@@ -26,7 +28,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             bean = createBeanInstance(beanDefinition, beanName, args);
             //填充bean域属性
             applyProperyValues(beanName, bean, beanDefinition);
-
+            //执行前置、初始化、后置方法
+            bean = initializeBean(beanName, bean, beanDefinition);
         } catch (Exception e) {
             throw new BeansException("Instantiation of bean failed", e);
         }
@@ -89,4 +92,48 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         this.instantiationStrategy = instantiationStrategy;
     }
 
+    private Object initializeBean(String beanName, Object bean, BeanDefinition beanDefinition) {
+
+        //1. 执行 BeanPostProcessor Before 处理
+        Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
+
+        //2. 这里的invokeInitMethods才是真正执行初始话bean实例的方法
+        invokeInitMethods(beanName, wrappedBean, beanDefinition);
+
+        //3. 执行 BeanPostProcessor After 处理
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+
+        return wrappedBean;
+    }
+
+    //todo 初始化bean实例，这里之前有个创建bean实例了，有啥区别？
+    private void invokeInitMethods(String beanName, Object wrappedBean, BeanDefinition beanDefinition) {
+
+    }
+
+    @Override
+    public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) throws BeansException {
+        Object result = existingBean;
+        //调用BeanPostProcessor实例化之前的处理方法
+        for (BeanPostProcessor processor : getBeanPostProcessors()) {
+            Object current = processor.postProcessBeforeInitialization(result, beanName);
+            //如果处理之后无法返回对象，则返回原来没有处理的入参对象
+            if (null == current) return result;
+            result = current;
+        }
+        return result;
+    }
+
+    @Override
+    public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName) throws BeansException {
+        Object result = existingBean;
+        //调用BeanPostProcessor实例化之后的处理方法
+        for (BeanPostProcessor processor : getBeanPostProcessors()) {
+            Object current = processor.postProcessBeforeInitialization(result, beanName);
+            //如果处理之后无法返回对象，则返回原来没有处理的入参对象
+            if (null == current) return result;
+            result = current;
+        }
+        return result;
+    }
 }
