@@ -15,7 +15,7 @@ import java.io.InputStream;
 /**
  * Create by peng on 2021/09/17.
  */
-public class MiddleApiTest {
+public class Middle1ApiTest {
 
     //通过配置文件灵活注册bean
     private DefaultResourceLoader resourceLoader;

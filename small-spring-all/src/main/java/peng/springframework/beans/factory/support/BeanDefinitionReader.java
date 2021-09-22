@@ -16,11 +16,13 @@ public interface BeanDefinitionReader {
     ResourceLoader getResourceLoader();
 
 
-    // 定义三个转换方法
+    // 定义转换方法
     void loadBeanDefinitions(Resource resource) throws BeansException;
 
     void loadBeanDefinitions(Resource... resources) throws BeansException;
 
     void loadBeanDefinitions(String location) throws BeansException;
+
+    void loadBeanDefinitions(String... locations) throws BeansException;
 
 }

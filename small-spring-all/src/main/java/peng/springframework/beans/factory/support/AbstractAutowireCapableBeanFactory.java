@@ -24,7 +24,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     protected Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args) throws BeansException {
         Object bean = null;
         try {
-            //创建bean实例
+            //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
             bean = createBeanInstance(beanDefinition, beanName, args);
             //填充bean域属性
             applyProperyValues(beanName, bean, beanDefinition);
@@ -106,7 +106,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return wrappedBean;
     }
 
-    //todo 初始化bean实例，这里之前有个创建bean实例了，有啥区别？
     private void invokeInitMethods(String beanName, Object wrappedBean, BeanDefinition beanDefinition) {
 
     }
