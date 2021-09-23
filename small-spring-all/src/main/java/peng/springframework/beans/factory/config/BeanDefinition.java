@@ -8,9 +8,18 @@ import peng.springframework.beans.PropertyValues;
  */
 public class BeanDefinition {
 
+    //bean对应的类信息
     private Class beanClass;
 
+    //bean要填充的属性信息
     private PropertyValues propertyValues;
+
+    //初始化方法
+    private String initMethodName;
+
+    //销毁方法
+    private String destroyMethodName;
+
 
     public BeanDefinition(Class beanClass) {
         this.beanClass = beanClass;
@@ -18,11 +27,10 @@ public class BeanDefinition {
         this.propertyValues = new PropertyValues();
     }
 
-    public BeanDefinition(Class beanClass, PropertyValues propertyValues){
+    public BeanDefinition(Class beanClass, PropertyValues propertyValues) {
         this.beanClass = beanClass;
         this.propertyValues = propertyValues != null ? propertyValues : new PropertyValues();
     }
-
 
     public Class getBeanClass() {
         return beanClass;
@@ -38,5 +46,22 @@ public class BeanDefinition {
 
     public void setProperlyValues(PropertyValues propertyValues) {
         this.propertyValues = propertyValues;
+    }
+
+
+    public String getInitMethodName() {
+        return initMethodName;
+    }
+
+    public void setInitMethodName(String initMethodName) {
+        this.initMethodName = initMethodName;
+    }
+
+    public String getDestroyMethodName() {
+        return destroyMethodName;
+    }
+
+    public void setDestroyMethodName(String destroyMethodName) {
+        this.destroyMethodName = destroyMethodName;
     }
 }

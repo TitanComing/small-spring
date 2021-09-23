@@ -1,7 +1,10 @@
 package peng.springframework.bean;
 
 
-public class UserService {
+import peng.springframework.beans.factory.DisposableBean;
+import peng.springframework.beans.factory.InitializingBean;
+
+public class UserService implements InitializingBean, DisposableBean {
 
     private String uId;
 
@@ -21,6 +24,17 @@ public class UserService {
 
     public String queryUserInfo() {
         return userDao.queryUserName(uId) + "," + company + "," + location;
+    }
+
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("执行UserService初始化方法：UserService.afterPropertiesSet");
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        System.out.println("执行UserService销毁方法：UserService.destroy");
     }
 
     public String getuId() {

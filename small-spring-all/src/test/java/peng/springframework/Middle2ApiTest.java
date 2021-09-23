@@ -50,10 +50,44 @@ public class Middle2ApiTest {
         UserService userService = applicationContext.getBean("userService", UserService.class);
         String result = userService.queryUserInfo();
         System.out.println("测试结果：" + result);
-
     }
 
+    //UserDao类的初始化和销毁方法是通过配置文件解析设置的
+    //UserService类的初始化和销毁方法是通过实现接口实现注册的
+    //初始化方法是创建bean的时候会执行，关闭的方法是要手动调用或者注册钩子（莫热门注册的就是关闭的方法）
+    //初始化或者销毁方法，仅仅是个方法，具体有啥影响需要看具体的方法实现
+    @Test
+    public void test_xml_init_destory_1() {
+        // 1. 初始化 BeanFactory
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        // 这个地方注册的是一个销毁的钩子，jvm运行停止的时候会执行close的销毁方法
+        applicationContext.registerShutdownHook();
 
+        // 2. 获取Bean对象调用方法
+        UserService userService = applicationContext.getBean("userService", UserService.class);
+        String result = userService.queryUserInfo();
+        System.out.println("测试结果：" + result);
+    }
 
+    @Test
+    public void test_xml_init_destory_2() {
+        // 1. 初始化 BeanFactory
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring.xml");
+        // 这个地方注册的是一个销毁的钩子，jvm运行停止的时候会执行close的销毁方法
+        //applicationContext.registerShutdownHook();
+
+        // 2. 获取Bean对象调用方法
+        UserService userService = applicationContext.getBean("userService", UserService.class);
+        String result = userService.queryUserInfo();
+        System.out.println("测试结果：" + result);
+
+        // 3. 手动调用关闭方法
+        applicationContext.close();
+    }
+
+    @Test
+    public void test_hook(){
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> System.out.println("close！")));
+    }
 
 }
