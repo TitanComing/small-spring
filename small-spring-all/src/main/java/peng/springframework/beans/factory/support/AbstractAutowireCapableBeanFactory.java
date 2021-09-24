@@ -5,12 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
-import peng.springframework.beans.factory.DisposableBean;
-import peng.springframework.beans.factory.InitializingBean;
+import peng.springframework.beans.factory.*;
 import peng.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.BeanReference;
+import sun.plugin.com.BeanClass;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -46,7 +46,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return bean;
     }
 
-    protected void  registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition){
+    protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
         if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             //这里注册的是个适配器,通过适配器统一了销毁方法的调用：将通过接口方法的调用和通过销毁反射方法的调用都整合到了通过接口接口方法调用
             registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));
@@ -109,6 +109,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
     private Object initializeBean(String beanName, Object bean, BeanDefinition beanDefinition) {
 
+        //初始化bean的时候, 把需要放出去的信息都放出去
+        if (bean instanceof Aware) {
+            if (bean instanceof BeanFactoryAware) {
+                ((BeanFactoryAware) bean).setBeanFactory(this);
+            }
+            if (bean instanceof BeanClassLoaderAware) {
+                ((BeanClassLoaderAware) bean).setBeanClassLoader(getBeanClassLoader());
+            }
+            if (bean instanceof BeanNameAware) {
+                ((BeanNameAware) bean).setBeanName(beanName);
+            }
+        }
+
         //1. 执行 BeanPostProcessor Before 处理
         Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
 
@@ -125,18 +138,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return wrappedBean;
     }
 
-    private void invokeInitMethods(String beanName, Object bean, BeanDefinition beanDefinition)  throws Exception{
+    private void invokeInitMethods(String beanName, Object bean, BeanDefinition beanDefinition) throws Exception {
         //1. 这里可以判定下bean是否实现了 InitializingBean
-        if(bean instanceof InitializingBean){
+        if (bean instanceof InitializingBean) {
             //继承了接口则调用接口的方法
             ((InitializingBean) bean).afterPropertiesSet();
         }
 
         //2. 注解配置 init-method {判断是为了避免二次执行销毁}
         String initMethodName = beanDefinition.getInitMethodName();
-        if(StrUtil.isNotEmpty(initMethodName)){
+        if (StrUtil.isNotEmpty(initMethodName)) {
             Method initMethod = beanDefinition.getBeanClass().getMethod(initMethodName);
-            if(null == initMethod){
+            if (null == initMethod) {
                 throw new BeansException("Could not find an init method named '" + initMethodName + "' on bean with name '" + beanName + "'");
             }
             initMethod.invoke(bean);
@@ -162,7 +175,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         Object result = existingBean;
         //调用BeanPostProcessor实例化之后的处理方法
         for (BeanPostProcessor processor : getBeanPostProcessors()) {
-            Object current = processor.postProcessBeforeInitialization(result, beanName);
+            Object current = processor.postProcessAfterInitialization(result, beanName);
             //如果处理之后无法返回对象，则返回原来没有处理的入参对象
             if (null == current) return result;
             result = current;

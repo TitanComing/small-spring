@@ -5,6 +5,7 @@ import peng.springframework.beans.factory.BeanFactory;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
+import peng.springframework.util.ClassUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,10 @@ import java.util.List;
  * 这里主要是模板模式的应用：1-可以将抽象方法留给字类实现  2-将方法置为protect,允许字类覆写
  */
 public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+
+    //这个地方提供ClassLoader,给子类调用
+    //目前是默认的ClassLoader
+    private ClassLoader beanClassLoader = ClassUtils.getDefaultClassLoader();
 
     //抽象的bean工厂这里维持BeanPostProcessor的列表
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
@@ -56,5 +61,9 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     public List<BeanPostProcessor> getBeanPostProcessors() {
         return beanPostProcessors;
+    }
+
+    public ClassLoader getBeanClassLoader() {
+        return this.beanClassLoader;
     }
 }
