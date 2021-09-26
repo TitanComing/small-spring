@@ -8,6 +8,11 @@ import peng.springframework.beans.PropertyValues;
  */
 public class BeanDefinition {
 
+    //增加bean的生成机制控制
+    String SCOPE_SINGLETON = ConfigurableBeanFactory.SCOPE_SINGLETION;
+
+    String SCOPE_PROTOTYPE = ConfigurableBeanFactory.SCOPE_PROTOTYPE;
+
     //bean对应的类信息
     private Class beanClass;
 
@@ -20,16 +25,36 @@ public class BeanDefinition {
     //销毁方法
     private String destroyMethodName;
 
+    //默认是单例模式
+    private String scope = SCOPE_SINGLETON;
+    //默认是单例模式
+    private boolean singleton = true;
+
+    private boolean prototype = false;
 
     public BeanDefinition(Class beanClass) {
-        this.beanClass = beanClass;
-        //这个构造条件默认是个空值，没有入参就构造个空对象
-        this.propertyValues = new PropertyValues();
+        //创建方法整合
+        this(beanClass, null);
     }
 
     public BeanDefinition(Class beanClass, PropertyValues propertyValues) {
         this.beanClass = beanClass;
         this.propertyValues = propertyValues != null ? propertyValues : new PropertyValues();
+    }
+
+    //这里的原型信息是作为附属信息进行提供的
+    public void setScope(String scope){
+        this.scope = scope;
+        this.singleton = SCOPE_SINGLETON.equals(scope);
+        this.prototype = SCOPE_PROTOTYPE.equals(scope);
+    }
+
+    public boolean isSingleton() {
+        return singleton;
+    }
+
+    public boolean isPrototype() {
+        return prototype;
     }
 
     public Class getBeanClass() {
