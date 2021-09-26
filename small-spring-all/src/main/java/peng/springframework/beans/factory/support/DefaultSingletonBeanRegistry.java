@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
+    //定义一个空对象
+    protected static final Object NULL_OBJECT = new Object();
+
     private Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
 
     //带有销毁方法的bean也是要单独存储的，这个地方其实放入的是适配器

@@ -42,11 +42,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         // 先把需要销毁的对象保存起来，方便后续销毁
         registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
 
-        addSingleton(beanName, bean);
+        if(beanDefinition.isSingleton()){
+            //单例才添加
+            addSingleton(beanName, bean);
+        }
+
         return bean;
     }
 
     protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
+
+        //非单例模式的bean不执行销毁方法: 非单例模式，内存没有统一维持，没有销毁的必要
+        if(!beanDefinition.isSingleton()) return;
+
         if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             //这里注册的是个适配器,通过适配器统一了销毁方法的调用：将通过接口方法的调用和通过销毁反射方法的调用都整合到了通过接口接口方法调用
             registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));

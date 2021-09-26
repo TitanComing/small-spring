@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+
+    <bean id="proxyUserDao" class="peng.springframework.bean.ProxyBeanFactory" />
+
+    <bean id="userServiceProxy" class="peng.springframework.bean.UserServiceProxy" scope="prototype">
+        <property name="uId" value="10001"/>
+        <property name="company" value="原始：啦啦啦"/>
+        <property name="location" value="origin: shanghai"/>
+        <property name="userDao" ref="proxyUserDao"/>
+    </bean>
+
+</beans>

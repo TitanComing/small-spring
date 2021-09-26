@@ -2,6 +2,7 @@ package peng.springframework.beans.factory.support;
 
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.factory.BeanFactory;
+import peng.springframework.beans.factory.FactoryBean;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -14,7 +15,7 @@ import java.util.List;
  * Create by peng on 2021/9/10.
  * 这里主要是模板模式的应用：1-可以将抽象方法留给字类实现  2-将方法置为protect,允许字类覆写
  */
-public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
     //这个地方提供ClassLoader,给子类调用
     //目前是默认的ClassLoader
@@ -25,7 +26,7 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     @Override
     public Object getBean(String name) throws BeansException {
-       return doGetBean(name, null);
+        return doGetBean(name, null);
     }
 
     @Override
@@ -34,18 +35,37 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
     }
 
     @Override
-    public <T> T getBean(String name, Class<T> requiredType) throws BeansException{
+    public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
         return (T) getBean(name);
     }
 
-    protected <T> T doGetBean(final String name, final Object[] args){
-        Object bean = getSingleton(name);
-        if(bean != null){
-            return (T) bean;
+    protected <T> T doGetBean(final String name, final Object[] args) {
+        //普通bean实例和工厂bean实例都被缓存了，所以要统一判断是不是要进一步生成，判断的逻辑进行了统一的封装
+        Object sharedInstance = getSingleton(name);
+        if (sharedInstance != null) {
+            // 如果是 FactoryBean，则需要调用 FactoryBean#getObject
+            return (T) getObjectForBeanInstance(sharedInstance, name);
         }
 
         BeanDefinition beanDefinition = getBeanDefinition(name);
-        return (T) createBean(name, beanDefinition, args);
+        Object bean = createBean(name, beanDefinition, args);
+        return (T) getObjectForBeanInstance(bean, name);
+    }
+
+    private Object getObjectForBeanInstance(Object beanInstance, String beanName) {
+        // 普通bean实例和工厂bean实例都要交给spring的，如果是工厂bean实例，spring需要进一步调用工厂bean实例方法生成bean实例对象
+        if (!(beanInstance instanceof FactoryBean)) {
+            return beanInstance;
+        }
+        // 先查工厂bean对应的缓存
+        Object object = getCachedObjectForFactoryBean(beanName);
+        // 缓冲中没有则创建
+        if (object == null) {
+            FactoryBean<?> factoryBean = (FactoryBean<?>) beanInstance;
+            object = getObjectFromFactoryBean(factoryBean, beanName);
+        }
+
+        return object;
     }
 
     protected abstract BeanDefinition getBeanDefinition(String beanName) throws BeansException;
