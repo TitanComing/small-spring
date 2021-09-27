@@ -1,8 +1,6 @@
 package peng.springframework;
 
 import org.junit.Test;
-import org.openjdk.jol.info.ClassLayout;
-import peng.springframework.bean.UserService;
 import peng.springframework.bean.UserServiceProxy;
 import peng.springframework.context.support.ClassPathXmlApplicationContext;
 
