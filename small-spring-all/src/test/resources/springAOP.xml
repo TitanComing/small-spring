@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+
+    <bean id="userService" class="peng.springframework.aop.UserService"/>
+
+<!--    <bean class="peng.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>-->
+
+<!--    <bean id="beforeAdvice" class="peng.springframework.aop.UserServiceBeforeAdvice"/>-->
+
+<!--    <bean id="methodInterceptor" class="peng.springframework.aop.adapter.MethodBeforeAdviceInterceptor">-->
+<!--        <property name="advice" ref="beforeAdvice"/>-->
+<!--    </bean>-->
+
+<!--    <bean id="pointcutAdvisor" class="peng.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor">-->
+<!--        <property name="expression" value="execution(* peng.springframework.aop.IUserService.*(..))"/>-->
+<!--        <property name="advice" ref="methodInterceptor"/>-->
+<!--    </bean>-->
+
+</beans>
