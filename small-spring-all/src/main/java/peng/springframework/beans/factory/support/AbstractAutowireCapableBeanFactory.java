@@ -6,11 +6,7 @@ import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
 import peng.springframework.beans.factory.*;
-import peng.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import peng.springframework.beans.factory.config.BeanDefinition;
-import peng.springframework.beans.factory.config.BeanPostProcessor;
-import peng.springframework.beans.factory.config.BeanReference;
-import sun.plugin.com.BeanClass;
+import peng.springframework.beans.factory.config.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -28,6 +24,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     protected Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args) throws BeansException {
         Object bean = null;
         try {
+            //判断是否要返回Bean对象的代理对象-aop的流程
+            bean = resolveBeforeInstantiation(beanName, beanDefinition);
+            if (null != bean) {
+                //这里直接返回了bean对象
+                return bean;
+            }
             //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
             bean = createBeanInstance(beanDefinition, beanName, args);
             //填充bean域属性
@@ -42,7 +44,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         // 先把需要销毁的对象保存起来，方便后续销毁
         registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
 
-        if(beanDefinition.isSingleton()){
+        if (beanDefinition.isSingleton()) {
             //单例才添加
             registerSingleton(beanName, bean);
         }
@@ -50,10 +52,28 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return bean;
     }
 
+    protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
+        Object bean = applyBeanPostProcessorsBeforeInstantiation(beanDefinition.getBeanClass(), beanName);
+        if (null != bean) {
+            bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+        }
+        return bean;
+    }
+
+    protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                Object result = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(beanClass, beanName);
+                if (null != result) return result;
+            }
+        }
+        return null;
+    }
+
     protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
 
         //非单例模式的bean不执行销毁方法: 非单例模式，内存没有统一维持，没有销毁的必要
-        if(!beanDefinition.isSingleton()) return;
+        if (!beanDefinition.isSingleton()) return;
 
         if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             //这里注册的是个适配器,通过适配器统一了销毁方法的调用：将通过接口方法的调用和通过销毁反射方法的调用都整合到了通过接口接口方法调用
