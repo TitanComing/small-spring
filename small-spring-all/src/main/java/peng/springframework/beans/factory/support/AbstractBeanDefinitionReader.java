@@ -27,7 +27,7 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
     }
 
     @Override
-    public BeanDefinitionRegistry getRegitry() {
+    public BeanDefinitionRegistry getRegistry() {
         return registry;
     }
 

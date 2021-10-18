@@ -11,7 +11,7 @@ import peng.springframework.core.io.ResourceLoader;
 public interface BeanDefinitionReader {
 
     //定义bean可以注册到的地方
-    BeanDefinitionRegistry getRegitry();
+    BeanDefinitionRegistry getRegistry();
     //定义获取bean方式
     ResourceLoader getResourceLoader();
 
