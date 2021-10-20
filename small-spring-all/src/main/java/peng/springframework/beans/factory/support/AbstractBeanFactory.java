@@ -7,6 +7,7 @@ import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
 import peng.springframework.util.ClassUtils;
+import peng.springframework.util.StringValueResolver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
     //抽象的bean工厂这里维持BeanPostProcessor的列表
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+
+    //解析注解属性值
+    private final List<StringValueResolver> embeddedValueResolvers = new ArrayList<>();
 
     @Override
     public Object getBean(String name) throws BeansException {
@@ -77,6 +81,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
         //这里先移除再添加，保证不重复
         this.beanPostProcessors.remove(beanPostProcessor);
         this.beanPostProcessors.add(beanPostProcessor);
+    }
+
+    @Override
+    public void addEmbeddedValueResolver(StringValueResolver valueResolver) {
+        this.embeddedValueResolvers.add(valueResolver);
+    }
+
+    @Override
+    public String resolveEmbeddedValue(String value) {
+        String result = value;
+        // 这个相当于用每个解析器都解析了一遍，不同解析器对应不同的占位符，命中则处理，不命中则不处理
+        for(StringValueResolver resolver: this.embeddedValueResolvers){
+            result = resolver.resolveStringValue(result);
+        }
+        return result;
     }
 
     public List<BeanPostProcessor> getBeanPostProcessors() {

@@ -1,6 +1,7 @@
 package peng.springframework.beans.factory.config;
 
 import peng.springframework.beans.factory.HierarchicalBeanFactory;
+import peng.springframework.util.StringValueResolver;
 
 /**
  * Create by peng on 2021/9/15.
@@ -18,5 +19,11 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 
     //单例对象的销毁
     void destroySingletons();
+
+    //增加属性值解析器
+    void addEmbeddedValueResolver(StringValueResolver valueResolver);
+
+    //解析属性值对象
+    String resolveEmbeddedValue(String value);
 
 }

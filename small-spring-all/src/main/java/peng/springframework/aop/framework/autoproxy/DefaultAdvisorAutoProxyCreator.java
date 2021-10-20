@@ -6,6 +6,7 @@ import peng.springframework.aop.*;
 import peng.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor;
 import peng.springframework.aop.framework.ProxyFactory;
 import peng.springframework.beans.BeansException;
+import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.factory.BeanFactory;
 import peng.springframework.beans.factory.BeanFactoryAware;
 import peng.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
@@ -72,5 +73,8 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
         return bean;
     }
 
-
+    @Override
+    public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException {
+        return pvs;
+    }
 }
