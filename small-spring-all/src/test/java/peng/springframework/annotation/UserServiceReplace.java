@@ -11,8 +11,8 @@ import java.util.Random;
  * 公众号：bugstack虫洞栈
  * Create by 小傅哥(fustack)
  */
-@Component("userService")
-public class UserService implements IUserService {
+@Component("userServiceReplace")
+public class UserServiceReplace implements IUserService {
 
     private String token;
 

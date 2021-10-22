@@ -4,7 +4,9 @@ import peng.springframework.beans.BeansException;
 import peng.springframework.beans.factory.ConfigurableListableBeanFactory;
 import peng.springframework.beans.factory.config.BeanDefinition;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,10 +32,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
     @Override
     public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
         Map<String, T> result = new HashMap<>();
-        beanDefinitionMap.forEach((beanName, beanDefinition)->{
+        beanDefinitionMap.forEach((beanName, beanDefinition) -> {
             Class beanClass = beanDefinition.getBeanClass();
             //判定是不是子类
-            if(type.isAssignableFrom(beanClass)){
+            if (type.isAssignableFrom(beanClass)) {
                 result.put(beanName, (T) getBean(beanName));
             }
         });
@@ -57,5 +59,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
         beanDefinitionMap.keySet().forEach(this::getBean);
     }
 
-
+    @Override
+    public <T> T getBean(Class<T> requiredType) throws BeansException {
+        List<String> beanNames = new ArrayList<>();
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            Class beanClass = entry.getValue().getBeanClass();
+            if (requiredType.isAssignableFrom(beanClass)) {
+                beanNames.add(entry.getKey());
+            }
+        }
+        // 注意： 这个可能查出来多个值的处理技巧，如果查出来数量不对，则直接抛异常
+        if (1 == beanNames.size()) {
+            return getBean(beanNames.get(0), requiredType);
+        }
+        throw new BeansException(requiredType + "expected single bean but found " + beanNames.size() + ": " + beanNames);
+    }
 }

@@ -32,7 +32,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             }
             //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
             bean = createBeanInstance(beanDefinition, beanName, args);
-            //填充bean域属性
+            //先通过BeanPostProcessor处理了注解，设置了一部分属性值，这里的pvs可以自己定义，目前直接用的beanDefiniton中的pvs
+            applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
+            //通过beanDefinition中的属性对，填充bean域属性，可能会对上面改的设置进行覆盖
             applyProperyValues(beanName, bean, beanDefinition);
             //执行前置、初始化、后置方法
             bean = initializeBean(beanName, bean, beanDefinition);
@@ -50,6 +52,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         }
 
         return bean;
+    }
+
+    // 通过BeanPostProcessor填充一部分属性值
+    protected void applyBeanPostProcessorsBeforeApplyingPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition){
+        for(BeanPostProcessor beanPostProcessor: getBeanPostProcessors()){
+            if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
+                //这个地方其实就是原封不动返回的，所以没有发生变动，但是实际上可以创造新的pvs对象进行调用
+                PropertyValues pvs = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessPropertyValues(beanDefinition.getPropertyValues(), bean, beanName);
+                if(null != pvs){
+                    for(PropertyValue propertyValue : pvs.getPropertyValues()){
+                        beanDefinition.getPropertyValues().addPropertyValue(propertyValue);
+                    }
+                }
+            }
+        }
     }
 
     protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
