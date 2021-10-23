@@ -7,6 +7,8 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValue;
+import peng.springframework.beans.PropertyValues;
+import peng.springframework.beans.factory.PropertyPlaceholderConfigurer;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanReference;
 import peng.springframework.beans.factory.support.AbstractBeanDefinitionReader;
@@ -72,16 +74,26 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
         // 解析 context:component-scan 标签，扫描包中的类并提取相关信息，用于组装 BeanDefinition
         Element componentScan = root.element("component-scan");
-        if(null != componentScan){
+        if (null != componentScan) {
             String scanPath = componentScan.attributeValue("base-package");
-            if(StrUtil.isEmpty(scanPath)){
+            if (StrUtil.isEmpty(scanPath)) {
                 throw new BeansException("The value of base-package attribute can not be empty or null");
             }
             scanPackage(scanPath);
         }
 
+        // 解析： context:property-placeholder 标签，获取配置文件位置，装载 PropertyPlaceholderConfigurer类的beanDefinition
+        Element propertyPlaceholder = root.element("property-placeholder");
+        if(null != propertyPlaceholder){
+            String locations = propertyPlaceholder.attributeValue("location");
+            if (StrUtil.isEmpty(locations)) {
+                throw new BeansException("The value of location attribute can not be empty or null");
+            }
+            scanPropertyPlaceholder(locations);
+        }
+
         List<Element> beanList = root.elements("bean");
-        for (Element bean: beanList) {
+        for (Element bean : beanList) {
 
             String id = bean.attributeValue("id");
             String name = bean.attributeValue("name");
@@ -132,6 +144,16 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
         String[] basePackages = StrUtil.splitToArray(scanPath, ',');
         ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(getRegistry());
         scanner.doScan(basePackages);
+    }
+
+    private void scanPropertyPlaceholder(String locations) {
+        String[] propertyPlaceholderLocations = StrUtil.splitToArray(locations, ',');
+        for (String propertyPlaceholderLocation : propertyPlaceholderLocations) {
+            PropertyValues propertyValues = new PropertyValues();
+            propertyValues.addPropertyValue(new PropertyValue("location", propertyPlaceholderLocation));
+            BeanDefinition beanDefinition = new BeanDefinition(PropertyPlaceholderConfigurer.class, propertyValues);
+            getRegistry().registerBeanDefinition("peng.springframework.beans.factory.PropertyPlaceholderConfigurer:" + propertyPlaceholderLocation, beanDefinition);
+        }
     }
 
 }

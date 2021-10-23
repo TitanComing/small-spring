@@ -20,4 +20,12 @@ public class Middle9ApiTest {
         System.out.println("测试结果：" + userService.queryUserInfo());
     }
 
+    @Test
+    public void test_scan_propertyPlaceholder() {
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:springAnnotation1.xml");
+        UserDao userDao = applicationContext.getBean(UserDao.class);
+        IUserService userService = applicationContext.getBean("userServiceAnnotation", IUserService.class);
+        System.out.println("测试结果：" + userService.queryUserInfo());
+    }
+
 }
