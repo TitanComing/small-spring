@@ -1,5 +1,7 @@
 package peng.springframework.aop;
 
+import peng.springframework.util.ClassUtils;
+
 /**
  * Create by peng on 2021/9/29.
  * <p>
@@ -16,7 +18,9 @@ public class TargetSource {
     // 返回被代理对象的类型-接口实现
     // spring-aop默认使用接口进行了实现
     public Class<?>[] getTargetClass() {
-        return this.target.getClass().getInterfaces();
+        Class<?> clazz = this.target.getClass();
+        clazz = ClassUtils.isCglibProxyClass(clazz) ? clazz.getSuperclass(): clazz;
+        return clazz.getInterfaces();
     }
 
     // 返回被代理对象的实例方便调用

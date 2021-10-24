@@ -9,13 +9,12 @@ import peng.springframework.beans.BeansException;
 public interface BeanPostProcessor {
 
     /**
-     * bean对象执行初始化方法之前，执行此方法
+     * bean对象已经实例化了，但是还没有赋值初始化，执行此方法
      */
-    // todo 实例化之前没有对象，对象怎么作为入参？
     Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException;
 
     /**
-     * bean对象执行初始化方法之后，执行此方法
+     * bean对象初始化复制完成，执行此方法
      */
     Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException;
 

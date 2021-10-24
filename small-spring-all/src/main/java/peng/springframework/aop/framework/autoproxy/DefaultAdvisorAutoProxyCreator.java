@@ -30,37 +30,17 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
     //实例化之前要进行的操作
     @Override
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
-
-        //放开对基础类的代理
-        if(isInfrastructureClass(beanClass)) return null;
-
-        //获取所有相关的切面类
-        Collection<AspectJExpressionPointcutAdvisor> advisors = beanFactory.getBeansOfType(AspectJExpressionPointcutAdvisor.class).values();
-
-        for(AspectJExpressionPointcutAdvisor advisor: advisors){
-            ClassFilter classFilter = advisor.getPointcut().getClassFilter();
-            if(!classFilter.matches(beanClass)) continue;
-
-            //todo 这里其实一个bean对象，可能有多个拦截器，其实应该定义下拦截器的执行顺序
-            AdvisedSupport advisedSupport = new AdvisedSupport();
-            TargetSource targetSource = null;
-            try {
-                targetSource = new TargetSource(beanClass.getDeclaredConstructor().newInstance());
-            } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            advisedSupport.setTargetSource(targetSource);
-            advisedSupport.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
-            advisedSupport.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
-            advisedSupport.setProxyTargetClass(false);
-
-            return new ProxyFactory(advisedSupport).getProxy();
-        }
         return null;
     }
 
-    private boolean isInfrastructureClass(Class<?> beanClass){
-        return Advice.class.isAssignableFrom(beanClass) || Pointcut.class.isAssignableFrom(beanClass) || Advisor.class.isAssignableFrom(beanClass);
+    @Override
+    public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
+        return true;
+    }
+
+    @Override
+    public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException {
+        return pvs;
     }
 
     @Override
@@ -70,11 +50,34 @@ public class DefaultAdvisorAutoProxyCreator implements InstantiationAwareBeanPos
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+
+        //放开对基础类的代理
+        if(isInfrastructureClass(bean.getClass())) return bean;
+
+        //获取所有相关的切面类
+        Collection<AspectJExpressionPointcutAdvisor> advisors = beanFactory.getBeansOfType(AspectJExpressionPointcutAdvisor.class).values();
+        for(AspectJExpressionPointcutAdvisor advisor: advisors){
+            ClassFilter classFilter = advisor.getPointcut().getClassFilter();
+            // 过滤匹配类
+            if(!classFilter.matches(bean.getClass())) continue;
+
+            //todo 这里其实一个bean对象，可能有多个拦截器，其实应该定义下拦截器的执行顺序
+            AdvisedSupport advisedSupport = new AdvisedSupport();
+
+            TargetSource targetSource = new TargetSource(bean);
+            advisedSupport.setTargetSource(targetSource);
+            advisedSupport.setMethodInterceptor((MethodInterceptor) advisor.getAdvice());
+            advisedSupport.setMethodMatcher(advisor.getPointcut().getMethodMatcher());
+            advisedSupport.setProxyTargetClass(false);
+
+            return new ProxyFactory(advisedSupport).getProxy();
+        }
+
         return bean;
     }
 
-    @Override
-    public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException {
-        return pvs;
+
+    private boolean isInfrastructureClass(Class<?> beanClass){
+        return Advice.class.isAssignableFrom(beanClass) || Pointcut.class.isAssignableFrom(beanClass) || Advisor.class.isAssignableFrom(beanClass);
     }
 }

@@ -32,6 +32,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             }
             //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
             bean = createBeanInstance(beanDefinition, beanName, args);
+            // 实例化之后，执行postProcessAfterInstantiation方法，顺便判定是不是进行后续的属性设置填充处理等处理
+            boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
+            if(!continueWithPropertyPopulation){
+                return bean;
+            }
             //先通过BeanPostProcessor处理了注解，设置了一部分属性值，这里的pvs可以自己定义，目前直接用的beanDefiniton中的pvs
             applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
             //通过beanDefinition中的属性对，填充bean域属性，可能会对上面改的设置进行覆盖
@@ -54,7 +59,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return bean;
     }
 
-    // 通过BeanPostProcessor填充一部分属性值
+    //Bean 实例化后对于返回 false 的对象，不在执行后续设置 Bean 对象属性的操作
+    private boolean applyBeanPostProcessorsAfterInstantiation(String beanName, Object bean){
+        boolean continueWithPropertyPopulation = true;
+        for(BeanPostProcessor beanPostProcessor: getBeanPostProcessors()){
+            if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
+                InstantiationAwareBeanPostProcessor instantiationAwareBeanPostProcessor = (InstantiationAwareBeanPostProcessor) beanPostProcessor;
+                //这个地方是判定，但是是直接调用了一次
+                if(!instantiationAwareBeanPostProcessor.postProcessAfterInstantiation(bean, beanName)){
+                    continueWithPropertyPopulation = false;
+                    break;
+                }
+            }
+        }
+        return continueWithPropertyPopulation;
+    }
+
+    // 正式填充属性前的处理
     protected void applyBeanPostProcessorsBeforeApplyingPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition){
         for(BeanPostProcessor beanPostProcessor: getBeanPostProcessors()){
             if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
