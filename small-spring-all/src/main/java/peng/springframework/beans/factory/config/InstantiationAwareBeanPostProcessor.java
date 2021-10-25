@@ -23,4 +23,10 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
     // 这个方法可以更改将要设置的属性
     PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException;
 
+    //增加一个获取半成品引用的接口
+    //这里使用了接口的default方法
+    default Object getEarlyBeanReference(Object bean, String beanName){
+        return bean;
+    }
+
 }
