@@ -34,7 +34,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             bean = createBeanInstance(beanDefinition, beanName, args);
             // 实例化之后，执行postProcessAfterInstantiation方法，顺便判定是不是进行后续的属性设置填充处理等处理
             boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
-            if(!continueWithPropertyPopulation){
+            if (!continueWithPropertyPopulation) {
                 return bean;
             }
             //先通过BeanPostProcessor处理了注解，设置了一部分属性值，这里的pvs可以自己定义，目前直接用的beanDefiniton中的pvs
@@ -59,14 +59,64 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return bean;
     }
 
-    //Bean 实例化后对于返回 false 的对象，不在执行后续设置 Bean 对象属性的操作
-    private boolean applyBeanPostProcessorsAfterInstantiation(String beanName, Object bean){
-        boolean continueWithPropertyPopulation = true;
-        for(BeanPostProcessor beanPostProcessor: getBeanPostProcessors()){
+    protected Object doCreateBean(String beanName, BeanDefinition beanDefinition, Object[] args) {
+        Object bean = null;
+
+        //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
+        bean = createBeanInstance(beanDefinition, beanName, args);
+
+        // 处理循环依赖-实际上就是已经实例化的对象提前放到缓存中暴漏出来
+        if (beanDefinition.isSingleton()) {
+            Object finalBean = bean;
+            addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, beanDefinition, finalBean));
+        }
+
+        // 实例化之后，执行postProcessAfterInstantiation方法，顺便判定是不是进行后续的属性设置填充处理等处理
+        boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
+        if (!continueWithPropertyPopulation) {
+            return bean;
+        }
+        //先通过BeanPostProcessor处理了注解，设置了一部分属性值，这里的pvs可以自己定义，目前直接用的beanDefiniton中的pvs
+        applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
+        //通过beanDefinition中的属性对，填充bean域属性，可能会对上面改的设置进行覆盖
+        applyProperyValues(beanName, bean, beanDefinition);
+        //执行前置、初始化、后置方法
+        bean = initializeBean(beanName, bean, beanDefinition);
+        // 注册实现了 DisposableBean 接口的 Bean 对象
+        // 先把需要销毁的对象保存起来，方便后续销毁
+        registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
+
+        if (beanDefinition.isSingleton()) {
+            //单例才添加
+            registerSingleton(beanName, bean);
+        }
+
+        return bean;
+
+    }
+
+    //处理二级缓存中半成品的引用
+    protected Object getEarlyBeanReference(String beanName, BeanDefinition beanDefinition, Object bean){
+        Object exposedObject = bean;
+        for(BeanPostProcessor beanPostProcessor:getBeanPostProcessors()){
+            // 这个地方要增加beanPostProcessor接口了
             if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
+                exposedObject = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).getEarlyBeanReference(exposedObject, beanName);
+                if(null == exposedObject) return null;
+            }
+        }
+
+        return exposedObject;
+    }
+
+    //Bean 实例化后对于返回 false 的对象，不在执行后续设置 Bean 对象属性的操作
+    private boolean applyBeanPostProcessorsAfterInstantiation(String beanName, Object bean) {
+        boolean continueWithPropertyPopulation = true;
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
                 InstantiationAwareBeanPostProcessor instantiationAwareBeanPostProcessor = (InstantiationAwareBeanPostProcessor) beanPostProcessor;
                 //这个地方是判定，但是是直接调用了一次
-                if(!instantiationAwareBeanPostProcessor.postProcessAfterInstantiation(bean, beanName)){
+                if (!instantiationAwareBeanPostProcessor.postProcessAfterInstantiation(bean, beanName)) {
                     continueWithPropertyPopulation = false;
                     break;
                 }
@@ -76,13 +126,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     }
 
     // 正式填充属性前的处理
-    protected void applyBeanPostProcessorsBeforeApplyingPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition){
-        for(BeanPostProcessor beanPostProcessor: getBeanPostProcessors()){
-            if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
+    protected void applyBeanPostProcessorsBeforeApplyingPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition) {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
                 //这个地方其实就是原封不动返回的，所以没有发生变动，但是实际上可以创造新的pvs对象进行调用
                 PropertyValues pvs = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessPropertyValues(beanDefinition.getPropertyValues(), bean, beanName);
-                if(null != pvs){
-                    for(PropertyValue propertyValue : pvs.getPropertyValues()){
+                if (null != pvs) {
+                    for (PropertyValue propertyValue : pvs.getPropertyValues()) {
                         beanDefinition.getPropertyValues().addPropertyValue(propertyValue);
                     }
                 }
