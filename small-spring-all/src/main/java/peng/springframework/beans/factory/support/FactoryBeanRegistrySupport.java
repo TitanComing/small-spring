@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry {
 
     //这里维持的是工厂bean创建的单例bean实例： FactoryBean name --> object
-    // todo 每个bean工厂实例只能创建一个实例对象吗？
     private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>();
 
     protected Object getCachedObjectForFactoryBean(String beanName) {

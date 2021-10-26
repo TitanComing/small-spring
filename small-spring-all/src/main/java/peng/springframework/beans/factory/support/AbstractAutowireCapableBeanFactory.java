@@ -22,16 +22,28 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
     @Override
     protected Object createBean(String beanName, BeanDefinition beanDefinition, Object[] args) throws BeansException {
+        // 首先判断是否返回代理Bean对象
+        Object bean = resolveBeforeInstantiation(beanName, beanDefinition);
+        if (null != bean) {
+            //这里直接返回了bean对象
+            return bean;
+        }
+
+        return doCreateBean(beanName, beanDefinition, args);
+    }
+
+    protected Object doCreateBean(String beanName, BeanDefinition beanDefinition, Object[] args) {
         Object bean = null;
         try {
-            //判断是否要返回Bean对象的代理对象-aop的流程
-            bean = resolveBeforeInstantiation(beanName, beanDefinition);
-            if (null != bean) {
-                //这里直接返回了bean对象
-                return bean;
-            }
             //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
             bean = createBeanInstance(beanDefinition, beanName, args);
+
+            // 处理循环依赖-实际上就是已经实例化的对象提前放到缓存中暴漏出来
+            if (beanDefinition.isSingleton()) {
+                Object finalBean = bean;
+                addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, beanDefinition, finalBean));
+            }
+
             // 实例化之后，执行postProcessAfterInstantiation方法，顺便判定是不是进行后续的属性设置填充处理等处理
             boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
             if (!continueWithPropertyPopulation) {
@@ -51,58 +63,25 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         // 先把需要销毁的对象保存起来，方便后续销毁
         registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
 
+        // 判断 SCOPE_SINGLETON、SCOPE_PROTOTYPE
+        Object exposedObject = bean;
         if (beanDefinition.isSingleton()) {
-            //单例才添加
-            registerSingleton(beanName, bean);
+            //获取对应的单例对象
+            exposedObject = getSingleton(beanName);
+            registerSingleton(beanName, exposedObject);
         }
 
-        return bean;
-    }
-
-    protected Object doCreateBean(String beanName, BeanDefinition beanDefinition, Object[] args) {
-        Object bean = null;
-
-        //创建bean实例：这个地方在源码里边实际上返回的是个BeanWrapper,实例化是在下边执行的
-        bean = createBeanInstance(beanDefinition, beanName, args);
-
-        // 处理循环依赖-实际上就是已经实例化的对象提前放到缓存中暴漏出来
-        if (beanDefinition.isSingleton()) {
-            Object finalBean = bean;
-            addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, beanDefinition, finalBean));
-        }
-
-        // 实例化之后，执行postProcessAfterInstantiation方法，顺便判定是不是进行后续的属性设置填充处理等处理
-        boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
-        if (!continueWithPropertyPopulation) {
-            return bean;
-        }
-        //先通过BeanPostProcessor处理了注解，设置了一部分属性值，这里的pvs可以自己定义，目前直接用的beanDefiniton中的pvs
-        applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
-        //通过beanDefinition中的属性对，填充bean域属性，可能会对上面改的设置进行覆盖
-        applyProperyValues(beanName, bean, beanDefinition);
-        //执行前置、初始化、后置方法
-        bean = initializeBean(beanName, bean, beanDefinition);
-        // 注册实现了 DisposableBean 接口的 Bean 对象
-        // 先把需要销毁的对象保存起来，方便后续销毁
-        registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
-
-        if (beanDefinition.isSingleton()) {
-            //单例才添加
-            registerSingleton(beanName, bean);
-        }
-
-        return bean;
-
+        return exposedObject;
     }
 
     //处理二级缓存中半成品的引用
-    protected Object getEarlyBeanReference(String beanName, BeanDefinition beanDefinition, Object bean){
+    protected Object getEarlyBeanReference(String beanName, BeanDefinition beanDefinition, Object bean) {
         Object exposedObject = bean;
-        for(BeanPostProcessor beanPostProcessor:getBeanPostProcessors()){
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
             // 这个地方要增加beanPostProcessor接口了
-            if(beanPostProcessor instanceof InstantiationAwareBeanPostProcessor){
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
                 exposedObject = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).getEarlyBeanReference(exposedObject, beanName);
-                if(null == exposedObject) return null;
+                if (null == exposedObject) return null;
             }
         }
 
@@ -202,9 +181,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
                 Object value = properlyValue.getValue();
 
                 //属性可能是个对象，所以要递归处理
-                //todo 这里没有处理循环依赖的问题，之后处理
                 if (value instanceof BeanReference) {
                     BeanReference beanReference = (BeanReference) value;
+                    //这个地方getBean是从缓存中获取，然后前边创建bean实例的步骤中，已经将bean对象放入缓存了，所以可以获取到bean对象
                     value = getBean(beanReference.getBeanName());
                 }
                 //填充属性，这里方便用第三方封装的包，也可以自己实现
