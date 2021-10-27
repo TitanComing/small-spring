@@ -1,6 +1,8 @@
 package peng.springframework.beans.factory.config;
 
+import com.sun.istack.internal.Nullable;
 import peng.springframework.beans.factory.HierarchicalBeanFactory;
+import peng.springframework.core.convert.ConversionService;
 import peng.springframework.util.StringValueResolver;
 
 /**
@@ -25,5 +27,12 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 
     //解析属性值对象
     String resolveEmbeddedValue(String value);
+
+    //增加属性转换能力
+    void setConversionService(ConversionService conversionService);
+
+    //增加属性转换能力
+    @Nullable
+    ConversionService getConversionService();
 
 }

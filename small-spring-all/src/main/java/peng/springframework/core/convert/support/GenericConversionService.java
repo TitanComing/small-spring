@@ -12,6 +12,8 @@ import java.util.*;
 
 /**
  * Create by peng on 2021/10/26.
+ *
+ * 通用的类型转换服务
  */
 public class GenericConversionService implements ConversionService, ConverterRegistry {
 

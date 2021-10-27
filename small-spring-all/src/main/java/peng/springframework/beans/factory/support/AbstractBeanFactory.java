@@ -6,6 +6,7 @@ import peng.springframework.beans.factory.FactoryBean;
 import peng.springframework.beans.factory.config.BeanDefinition;
 import peng.springframework.beans.factory.config.BeanPostProcessor;
 import peng.springframework.beans.factory.config.ConfigurableBeanFactory;
+import peng.springframework.core.convert.ConversionService;
 import peng.springframework.util.ClassUtils;
 import peng.springframework.util.StringValueResolver;
 
@@ -24,6 +25,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
     //抽象的bean工厂这里维持BeanPostProcessor的列表
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+
+    //实例属性转换功能
+    private ConversionService conversionService;
 
     //解析注解属性值
     private final List<StringValueResolver> embeddedValueResolvers = new ArrayList<>();
@@ -96,6 +100,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
             result = resolver.resolveStringValue(result);
         }
         return result;
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return conversionService;
+    }
+
+    @Override
+    public void setConversionService(ConversionService conversionService) {
+        this.conversionService = conversionService;
     }
 
     public List<BeanPostProcessor> getBeanPostProcessors() {

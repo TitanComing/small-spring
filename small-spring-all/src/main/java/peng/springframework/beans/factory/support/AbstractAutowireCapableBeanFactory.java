@@ -2,11 +2,13 @@ package peng.springframework.beans.factory.support;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.TypeUtil;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.PropertyValue;
 import peng.springframework.beans.factory.*;
 import peng.springframework.beans.factory.config.*;
+import peng.springframework.core.convert.ConversionService;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -186,6 +188,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
                     //这个地方getBean是从缓存中获取，然后前边创建bean实例的步骤中，已经将bean对象放入缓存了，所以可以获取到bean对象
                     value = getBean(beanReference.getBeanName());
                 }
+                // 这个地方现在具有类型转换的能力了
+                else{
+                    Class<?> sourceType = value.getClass();
+                    Class<?> targetType = (Class<?>) TypeUtil.getFieldType(bean.getClass(), name);
+                    //能转换的就转换，转换不了的不影响原有的属性值
+                    ConversionService conversionService = getConversionService();
+                    if(null != conversionService){
+                        if(conversionService.canConvert(sourceType, targetType)){
+                            value = conversionService.convert(value, targetType);
+                        }
+                    }
+                }
                 //填充属性，这里方便用第三方封装的包，也可以自己实现
                 BeanUtil.setFieldValue(bean, name, value);
             }
@@ -220,7 +234,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         //1. 执行 BeanPostProcessor Before 处理
         Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
 
-        //2. 这里的invokeInitMethods才是真正执行初始话bean实例的方法
+        //2. 这里的invokeInitMethods才是真正执行初始化bean实例的方法
         try {
             invokeInitMethods(beanName, wrappedBean, beanDefinition);
         } catch (Exception e) {

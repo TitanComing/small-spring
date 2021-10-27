@@ -29,6 +29,9 @@ public class NumberUtils {
      */
     public static final Set<Class<?>> STANDARD_NUMBER_TYPES;
 
+    //静态代码块
+    //jvm加载类的时候执行，仅执行一次，执行顺序优于main()函数，用于给类初始化
+    //作为对比，构造代码块是给对象初始化的
     static {
         Set<Class<?>> numberTypes = new HashSet<>(8);
         numberTypes.add(Byte.class);

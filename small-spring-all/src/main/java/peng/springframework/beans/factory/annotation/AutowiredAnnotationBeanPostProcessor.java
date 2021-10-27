@@ -1,12 +1,14 @@
 package peng.springframework.beans.factory.annotation;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.TypeUtil;
 import peng.springframework.beans.BeansException;
 import peng.springframework.beans.PropertyValues;
 import peng.springframework.beans.factory.BeanFactory;
 import peng.springframework.beans.factory.BeanFactoryAware;
 import peng.springframework.beans.factory.ConfigurableListableBeanFactory;
 import peng.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
+import peng.springframework.core.convert.ConversionService;
 import peng.springframework.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -23,7 +25,6 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
         this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
     }
 
-    // 这个方法把属性值放进去又原样返回了
     // 返回的pvs会调用一次设置，所有其实是一个预留接口，可以创造全新的pvs对象，调用进行一次设置
     @Override
     public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException {
@@ -37,8 +38,19 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
             Value valueAnnotation = field.getAnnotation(Value.class);
             if (null != valueAnnotation) {
                 // 用注解对域变量赋值
-                String value = valueAnnotation.value();
-                value = beanFactory.resolveEmbeddedValue(value);
+                Object value = valueAnnotation.value();
+                value = beanFactory.resolveEmbeddedValue((String) value);
+
+                // 进行属性类型转换
+                Class<?> sourceType = value.getClass();
+                Class<?> targetType = (Class<?>) TypeUtil.getType(field);
+                ConversionService conversionService = beanFactory.getConversionService();
+                if (conversionService != null) {
+                    if (conversionService.canConvert(sourceType, targetType)) {
+                        value = conversionService.convert(value, targetType);
+                    }
+                }
+
                 BeanUtil.setFieldValue(bean, field.getName(), value);
             }
         }

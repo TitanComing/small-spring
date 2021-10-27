@@ -7,6 +7,7 @@ import peng.springframework.core.convert.converter.ConverterRegistry;
  */
 public class DefaultConversionService extends GenericConversionService {
 
+    // 这个地方的构造方法调用了一个自己的静态方法，用来完成对对象的初始化
     public DefaultConversionService() {
         addDefaultConverters(this);
     }

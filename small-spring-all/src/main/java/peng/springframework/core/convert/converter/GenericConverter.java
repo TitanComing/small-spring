@@ -15,7 +15,7 @@ public interface GenericConverter {
     Set<ConvertiblePair> getConvertibleTypes();
 
     // 把一个对象从一个类型转换为另外一个类型
-    Object convert(Object source, Class<?> sourceType, Class<?> targetType);
+    Object convert(Object source, Class sourceType, Class targetType);
 
     //接口里边定义一个内部类
     //Holder for a source-to-target class pair.
