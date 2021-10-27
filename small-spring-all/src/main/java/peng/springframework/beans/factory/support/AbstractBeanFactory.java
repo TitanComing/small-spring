@@ -47,6 +47,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
         return (T) getBean(name);
     }
 
+    @Override
+    public boolean containsBean(String name) {
+        return containsBeanDefinition(name);
+    }
+
+    protected abstract boolean containsBeanDefinition(String beanName);
+
     protected <T> T doGetBean(final String name, final Object[] args) {
         //普通bean实例和工厂bean实例都被缓存了，所以要统一判断是不是要进一步生成，判断的逻辑进行了统一的封装
         Object sharedInstance = getSingleton(name);

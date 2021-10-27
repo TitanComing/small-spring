@@ -12,6 +12,7 @@ import peng.springframework.context.event.ApplicationEventMulticaster;
 import peng.springframework.context.event.ContextClosedEvent;
 import peng.springframework.context.event.ContextRefreshedEvent;
 import peng.springframework.context.event.SimpleApplicationEventMulticaster;
+import peng.springframework.core.convert.ConversionService;
 import peng.springframework.core.io.DefaultResourceLoader;
 
 import java.util.Collection;
@@ -54,8 +55,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
         // 7. 注册事件监听者
         registerListeners();
 
-        // 8. 对于单例模式下的对象，可以提前实例化-也就是预加载的过程中已经触发了实例的调用链
-        beanFactory.preInstantiateSingletons();
+        // 8. 设置类型转换，实例化单例Bean对象
+        finishBeanFactoryInitialization(beanFactory);
 
         // 9. 初始化事件广播站、监听者，就可以发布第一个事件了-容器刷新完成事件
         finishRefresh();
@@ -95,6 +96,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
         }
     }
 
+    // 引入类型转换器，提前实例化单例bean对象
+    protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory){
+        // 设置类型转换器-这个地方是把bean名称写死的
+        if(beanFactory.containsBean("conversionService")){
+            Object conversionService = beanFactory.getBean("conversionService");
+            // 因为前边是bean名称，所以这个地方要校验下类是否相同
+            if(conversionService instanceof ConversionService){
+                beanFactory.setConversionService((ConversionService) conversionService);
+            }
+        }
+
+        // 实例化单例Bean对象
+        beanFactory.preInstantiateSingletons();
+    }
+
     private void finishRefresh() {
         publishEvent(new ContextRefreshedEvent(this));
     }
@@ -123,6 +139,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
     @Override
     public <T> T getBean(Class<T> requiredType) throws BeansException {
         return getBeanFactory().getBean(requiredType);
+    }
+
+    @Override
+    public boolean containsBean(String name) {
+        return getBeanFactory().containsBean(name);
     }
 
     @Override

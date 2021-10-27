@@ -3,6 +3,7 @@ package peng.springframework;
 import org.junit.Test;
 import peng.springframework.context.support.ClassPathXmlApplicationContext;
 import peng.springframework.convert.bean.Husband;
+import peng.springframework.convert.bean.HusbandDefault;
 import peng.springframework.convert.converter.StringToIntegerConverter;
 import peng.springframework.core.convert.converter.Converter;
 import peng.springframework.core.convert.support.StringToNumberConverterFactory;
@@ -32,11 +33,20 @@ public class HighLevel2Test {
         System.out.println("测试结果：" + stringToLongConverter.convert("1234"));
     }
 
+    //测试整合到bean生命周期中的转换器
     @Test
     public void test_convert(){
         ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:springConverter.xml");
         Husband husband = applicationContext.getBean("husband", Husband.class);
         System.out.println("测试结果：" + husband);
+    }
+
+    //测试框架自带的转换器
+    @Test
+    public void test_convert_default(){
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:springConverterDefault.xml");
+        HusbandDefault husbandDefault = applicationContext.getBean("husbandDefault", HusbandDefault.class);
+        System.out.println("测试结果：" + husbandDefault);
     }
 
 }

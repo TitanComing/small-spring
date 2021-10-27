@@ -16,4 +16,6 @@ public interface BeanFactory {
     <T> T getBean(String name, Class<T> requiredType) throws BeansException;
     //按照类型获取bean对象
     <T> T getBean(Class<T> requiredType) throws BeansException;
+    //判断bean工厂中是否有某个bean实例
+    boolean containsBean(String name);
 }
